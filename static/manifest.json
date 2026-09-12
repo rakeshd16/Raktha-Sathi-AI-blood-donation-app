@@ -1,0 +1,57 @@
+{
+  "name": "Rakt-Sathi - Life's Lifeline",
+  "short_name": "Rakt-Sathi",
+  "description": "Blood donation and request management platform connecting donors with those in need",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0f13",
+  "theme_color": "#d50000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "medical", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Request Blood",
+      "short_name": "Request",
+      "description": "Create a new blood request",
+      "url": "/?action=request",
+      "icons": [{ "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Donate Blood",
+      "short_name": "Donate",
+      "description": "Register as a blood donor",
+      "url": "/?action=donate",
+      "icons": [{ "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

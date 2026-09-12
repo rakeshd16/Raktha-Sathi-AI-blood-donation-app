@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rakt-Sathi | Life's Lifeline</title>
+
+  <!-- PWA Configuration -->
+  <meta name="theme-color" content="#d50000" />
+  <meta name="description" content="Blood donation and request management platform connecting donors with those in need" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rakt-Sathi" />
+  <link rel="apple-touch-icon" href="/static/icon-192.png" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-TileColor" content="#d50000" />
+  <meta name="msapplication-TileImage" content="/static/icon-192.png" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Icons -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  
+  <!-- PWA Helper Script -->
+  <script src="/static/pwa-helper.js" defer></script>
+
+  <style>
+    :root {
+      --primary: #d50000;
+      --primary-dark: #b00000;
+    }
+
+    /* Base + dark-mode surfaces */
+    html, body { height: 100%; }
+    body {
+      background: #f3f4f6;
+      color: #111827;
+      transition: background .25s ease, color .25s ease;
+    }
+    .dark body {
+      background: #0d0f13 !important;
+      color: #e5e7eb !important;
+    }
+
+    /* Card that wraps the 2x2 tiles */
+    .tile-box {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+      padding: 1.25rem;
+      transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+    .dark .tile-box {
+      background: #14181f !important;
+      border-color: #2a3140 !important;
+      box-shadow: 0 10px 30px rgba(0,0,0, .4);
+    }
+
+    /* The tiles/buttons */
+    .tile-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 9.5rem; height: 9.5rem;
+      border-radius: 1rem;
+      border: 1.5px solid #e5e7eb;
+      background: #ffffff;
+      box-shadow: 0 6px 14px rgba(17, 24, 39, .06);
+      transition: transform .1s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease, color .25s ease;
+    }
+    .tile-btn:hover { box-shadow: 0 10px 24px rgba(17, 24, 39, .12); transform: translateY(-1px); }
+    .tile-btn:active { transform: scale(.97); }
+    .tile-btn span { font-weight: 700; line-height: 1.1; letter-spacing: .2px; text-align: center; }
+    .dark .tile-btn {
+      background: #1b2029; border-color: #2f3747; color: #e8eaee;
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    }
+    .dark .tile-btn:hover { box-shadow: 0 16px 30px rgba(0,0,0,.55); }
+    .dark .tile-btn i { filter: drop-shadow(0 0 4px rgba(213,0,0,.55)); }
+
+    /* Page fade animation */
+    .fade-area { opacity: 0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
+    .fade-area.show { opacity: 1; transform: translateY(0); }
+
+    /* Inputs in dark */
+    .dark .input-dark { background: #1e2632 !important; color: #e8eaee !important; border-color: #334155 !important; }
+    .dark .input-dark::placeholder { color: #9aa4b2 !important; }
+
+    /* Header */
+    .hdr {
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .dark .hdr {
+      background: rgba(17, 24, 39, .85);
+      border-bottom-color: #2a3140;
+    }
+
+    /* SOS image ring */
+    .sos-ring { box-shadow: 0 12px 30px rgba(213,0,0,.35); border-radius: 9999px; }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--primary); color: #fff;
+      transition: background .2s ease;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    /* Linkish */
+    .linkish { color: var(--primary); }
+    .linkish:hover { text-decoration: underline; }
+  /* [ADDED] small red dot for unread/active status on confirming logo */
+    .ping-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      background: #ef4444;
+      box-shadow: 0 0 0 2px white;
+    }
+    .dark .ping-dot { box-shadow: 0 0 0 2px #151922; }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col font-sans">
+
+  <!-- HEADER -->
+  <header id="app-header" class="hidden hdr sticky top-0 z-50">
+    <div class="flex max-w-6xl mx-auto px-4 py-3 items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="back-btn"
+          class="hidden text-xl px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+          ←
+        </button>
+        <i class="fas fa-hand-holding-medical text-2xl text-red-600"></i>
+        <h1 class="text-xl md:text-2xl font-extrabold text-red-600">Rakt-Sathi 🩸</h1>
+      </div>
+
+      <!-- >>> ADDED: RIGHT SIDE ACTIONS (Confirming logo, Dark mode, Profile) >>> -->
+      <div class="flex items-center gap-3">
+
+        <!-- Confirming / Requests icon with dropdown -->
+        <div class="relative">
+          <button id="confirm-btn"
+            class="relative w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 grid place-items-center
+                   text-gray-700 dark:text-gray-200 hover:scale-110 transition"
+            title="Requests">
+            <i class="fa-solid fa-inbox"></i>
+            <span id="confirm-badge"
+              class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] leading-none grid place-items-center">0</span>
+          </button>
+
+          <div id="confirm-menu"
+               class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-[#151922] border border-gray-200
+                      dark:border-[#2a3140] rounded-lg shadow-lg overflow-hidden">
+            <div class="px-4 py-2 font-semibold border-b dark:border-[#2a3140]">Pending Requests</div>
+            <ul id="confirm-list" class="max-h-64 overflow-y-auto divide-y dark:divide-[#2a3140]"></ul>
+            <div class="p-2 text-xs text-gray-500 dark:text-gray-400">Tip: Click ✓ to accept or ✕ to ignore.</div>
+          </div>
+        </div>
+
+        <!-- Dark mode toggle -->
+        <button id="theme-toggle"
+          class="w-10 h-10 grid place-items-center rounded-full bg-gray-200 dark:bg-gray-800
+                 hover:scale-110 transition text-gray-700 dark:text-yellow-300"
+          title="Toggle dark mode">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Profile with dropdown -->
+        <div class="relative">
+          <button id="profile-btn"
+            class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 grid place-items-center
+                   text-gray-700 dark:text-gray-200 hover:scale-110 transition"
+            title="Profile">
+            <i class="fa-solid fa-user"></i>
+          </button>
+
+          <div id="profile-menu"
+               class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-[#151922] border border-gray-200
+                      dark:border-[#2a3140] rounded-lg shadow-lg py-2 text-sm z-50">
+            <!-- Profile Info Section -->
+            <div id="profile-info" class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <p class="font-semibold text-gray-800 dark:text-gray-200" id="profile-name">User Name</p>
+              <p class="text-gray-600 dark:text-gray-400 text-xs" id="profile-email-display">email@example.com</p>
+            </div>
+            
+            <!-- User Details -->
+            <div id="profile-details" class="px-4 py-2 text-gray-700 dark:text-gray-300 space-y-1 hidden">
+              <p><strong>Blood Group:</strong> <span id="profile-bg">-</span></p>
+              <p><strong>Phone:</strong> <span id="profile-phone">-</span></p>
+              <p><strong>Last Donation:</strong> <span id="profile-last-donation">-</span></p>
+            </div>
+            
+            <button id="view-profile-btn" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-blue-600 dark:text-blue-400">
+              View Full Profile
+            </button>
+            <button id="logout-btn" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400">
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- <<< ADDED END -->
+    </div>
+  </header>
+  <!-- LOGIN -->
+  <div id="login-container" class="flex-1 flex items-center justify-center p-6"></div>
+
+  <!-- MAIN -->
+  <main id="main-app-content" class="hidden flex-1 w-full max-w-4xl mx-auto px-4 py-6 relative">
+
+    <!-- Tiles -->
+    <div id="tile-screen" class="w-full fade-area mt-2 show">
+      <div class="tile-box fade-area show">
+        <div class="grid grid-cols-2 gap-6 justify-items-center">
+
+          <button id="tile-register" class="tile-btn">
+            <i class="fa-solid fa-user-plus text-3xl text-red-600"></i>
+            <span>Donor<br>Registration</span>
+          </button>
+
+          <button id="tile-request" class="tile-btn">
+            <i class="fa-solid fa-syringe text-3xl text-red-600"></i>
+            <span>Request<br>Donor</span>
+          </button>
+
+          <button id="tile-matches" class="tile-btn">
+            <i class="fa-solid fa-magnifying-glass text-3xl text-red-600"></i>
+            <span>Donor<br>Matches</span>
+          </button>
+
+          <button id="tile-chatbot" class="tile-btn">
+            <i class="fa-solid fa-robot text-3xl text-red-600"></i>
+            <span>AI<br>Chatbot</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature content -->
+    <div id="content-container"
+      class="hidden fade-area w-full bg-white dark:bg-[#151922] p-6 rounded-2xl shadow border border-gray-200 dark:border-[#2a3140]"></div>
+
+    <!-- Toast -->
+    <div id="message-box"
+      class="fixed bottom-6 right-6 bg-gray-900 text-white px-4 py-3 rounded-md shadow opacity-0 transition pointer-events-none"></div>
+
+  </main>
+
+  <!-- SOS (fixed bottom-right) -->
+  <button id="emergency-btn" title="SOS"
+    class="hidden fixed bottom-6 right-6 bg-white dark:bg-[#151922] border border-gray-200 dark:border-[#2a3140] rounded-full shadow-2xl p-2">
+    <img
+      src="https://as1.ftcdn.net/v2/jpg/03/89/49/32/1000_F_389493264_voeROqL9LJ42c08bR25JheX4xhbb5wmq.jpg"
+      class="w-20 h-20 rounded-full object-cover sos-ring" />
+  </button>
+
+  <!-- FOOTER -->
+  <footer class="py-4 bg-gray-900 text-white text-center text-sm">
+    &copy; <span id="current-year"></span> Rakt-Sathi • Saving Lives Together
+  </footer>
+
+  <!-- SCRIPT (Logic preserved) -->
+  <script type="module">
+    /* ------------------ GLOBALS ------------------ */
+    // Auto-detect API URL based on current location
+    const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
+    
+    console.log("🔗 API URL:", API_BASE_URL);
+    console.log("📍 Current Host:", window.location.hostname);
+    document.getElementById("current-year").textContent = new Date().getFullYear();
+
+    const loginContainer = document.getElementById("login-container");
+    const appHeader = document.getElementById("app-header");
+    const mainContent = document.getElementById("main-app-content");
+    const contentContainer = document.getElementById("content-container");
+    const tileScreen = document.getElementById("tile-screen");
+    const backBtn = document.getElementById("back-btn");
+    const themeToggle = document.getElementById("theme-toggle");
+    const emergencyBtn = document.getElementById("emergency-btn");
+
+    // ★ ADDED: profile elements
+    const profileBtn = document.getElementById("profile-btn");
+const profileMenu = document.getElementById("profile-menu");
+const logoutBtn = document.getElementById("logout-btn");
+const profileEmailEl = document.getElementById("profile-email");
+
+    let isLoggedIn = false;
+    let currentUserEmail = null;
+
+    const SIMULATED_ACCOUNTS = { "raktasathi@gmail.com": "Raktsathi@2025" };
+
+    let user_lat = null;
+    let user_lon = null;
+
+
+    /* GPS */
+    function getLocation() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { user_lat = pos.coords.latitude; user_lon = pos.coords.longitude; },
+        () => console.log("Location not allowed")
+      );
+    }
+    getLocation();
+
+    /* Dark mode */
+    if (localStorage.getItem("rs-theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+    themeToggle.onclick = () => {
+      document.documentElement.classList.toggle("dark");
+      localStorage.setItem("rs-theme",
+        document.documentElement.classList.contains("dark") ? "dark" : "light"
+      );
+    };
+     /* ★ ADDED: Profile dropdown handlers */
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        profileMenu.classList.toggle("hidden");
+        
+        // Fetch user profile data when opening menu
+        if (!profileMenu.classList.contains("hidden") && currentUserEmail) {
+          await loadUserProfile();
+        }
+      });
+      document.addEventListener("click", (e) => {
+        if (!profileMenu.contains(e.target) && !profileBtn.contains(e.target)) {
+          profileMenu.classList.add("hidden");
+        }
+      });
+    }
+    
+    // Load user profile data
+    async function loadUserProfile() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/donor-by-email/${encodeURIComponent(currentUserEmail)}`);
+        if (res.ok) {
+          const donor = await res.json();
+          document.getElementById("profile-name").textContent = donor.name || "User";
+          document.getElementById("profile-email-display").textContent = currentUserEmail;
+          document.getElementById("profile-bg").textContent = donor.blood_group || "-";
+          document.getElementById("profile-phone").textContent = donor.contact_number || "-";
+          document.getElementById("profile-last-donation").textContent = donor.last_donation_date || "Never";
+          document.getElementById("profile-details").classList.remove("hidden");
+        }
+      } catch (e) {
+        console.log("Could not load profile:", e);
+      }
+    }
+    
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        profileMenu.classList.add("hidden");
+        handleLogout();
+      });
+    }
+    
+    // View full profile
+    const viewProfileBtn = document.getElementById("view-profile-btn");
+    if (viewProfileBtn) {
+      viewProfileBtn.addEventListener("click", () => {
+        profileMenu.classList.add("hidden");
+        renderDonorProfile();
+      });
+    }
+
+    /* Toast */
+    function showNotification(msg, type) {
+      const box = document.getElementById("message-box");
+      box.textContent = msg;
+      box.classList.remove("opacity-0");
+      box.classList.toggle("bg-green-600", type === "success");
+      box.classList.toggle("bg-red-600", type === "error");
+      box.classList.toggle("bg-gray-900", type === "info");
+      setTimeout(() => box.classList.add("opacity-0"), 2500);
+    }
+
+    /* Small helper to animate section show */
+    function reveal(el) {
+      requestAnimationFrame(() => {
+        el.classList.add('show');
+      });
+    }
+    
+
+    /* HOME */
+    function renderHomePage() {
+      mainContent.classList.add("hidden");
+      appHeader.classList.add("hidden");
+      loginContainer.classList.remove("hidden");
+
+      loginContainer.innerHTML = `
+        <div class="text-center max-w-xl w-full mx-auto bg-white dark:bg-[#151922] p-10 rounded-xl shadow-xl border-t-4 border-red-600">
+          <i class="fas fa-hand-holding-medical text-6xl text-red-600 mb-6"></i>
+          <h1 class="text-4xl font-extrabold mb-4">Welcome to <span class="text-red-600">Rakt-Sathi</span></h1>
+          <p class="text-gray-600 dark:text-gray-300 mb-8 text-lg">India's Lifeline for Blood Donation.</p>
+
+          <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <button id="home-login-btn" class="px-6 py-3 btn-primary rounded-lg">
+              <i class="fas fa-sign-in-alt mr-2"></i> Login
+            </button>
+            <button id="home-signup-btn"
+              class="px-6 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-transparent">
+              <i class="fas fa-user-plus mr-2"></i> Sign Up
+            </button>
+          </div>
+        </div>`;
+
+      document.getElementById("home-login-btn").onclick = renderLoginPage;
+      document.getElementById("home-signup-btn").onclick = renderSignupPage;
+    }
+
+    /* LOGIN */
+    function renderLoginPage() {
+      loginContainer.innerHTML = `
+        <div class="bg-white dark:bg-[#151922] p-8 rounded-xl shadow-xl border-t-4 border-red-600 w-full max-w-sm fade-area show">
+          <div class="text-center mb-6">
+            <i class="fas fa-hand-holding-medical text-5xl text-red-600 mb-3"></i>
+            <h2 class="text-3xl font-bold">Welcome Back</h2>
+          </div>
+          <form id="login-form" class="space-y-4">
+            <input type="email" id="login-email" placeholder="Email" required
+              class="w-full p-3 border rounded-lg input-dark">
+            <input type="password" id="login-password" placeholder="Password" required
+              class="w-full p-3 border rounded-lg input-dark">
+            <button type="submit" class="w-full py-3 btn-primary rounded-lg">Login</button>
+          </form>
+          <p class="text-center text-sm mt-4">
+            New user? <a href="#" id="switch-to-signup" class="linkish">Sign Up</a>
+          </p>
+        </div>`;
+      document.getElementById("login-form").addEventListener("submit", handleLogin);
+      document.getElementById("switch-to-signup").onclick = e => { e.preventDefault(); renderSignupPage(); };
+    }
+
+    /* SIGNUP */
+    function renderSignupPage() {
+      loginContainer.innerHTML = `
+        <div class="bg-white dark:bg-[#151922] p-8 rounded-xl shadow-xl border-t-4 border-red-600 w-full max-w-sm fade-area show">
+          <div class="text-center mb-6">
+            <i class="fas fa-user-plus text-5xl text-red-600 mb-3"></i>
+            <h2 class="text-3xl font-bold">Create Account</h2>
+          </div>
+          <form id="signup-form" class="space-y-4">
+            <input type="email" id="signup-email" placeholder="Email" required
+              class="w-full p-3 border rounded-lg input-dark">
+            <input type="password" id="signup-password" placeholder="Password" required
+              class="w-full p-3 border rounded-lg input-dark">
+            <input type="password" id="signup-confirm-password" placeholder="Confirm Password" required
+              class="w-full p-3 border rounded-lg input-dark">
+            <button type="submit" class="w-full py-3 btn-primary rounded-lg">Sign Up</button>
+          </form>
+          <p class="text-center text-sm mt-4">
+            Already have an account? <a href="#" id="switch-to-login" class="linkish">Login</a>
+          </p>
+        </div>`;
+      document.getElementById("signup-form").addEventListener("submit", handleSignup);
+      document.getElementById("switch-to-login").onclick = e => { e.preventDefault(); renderLoginPage(); };
+    }
+
+    /* AUTH */
+    function handleSignup(e) {
+      e.preventDefault();
+      const email = document.getElementById("signup-email").value.toLowerCase();
+      const password = document.getElementById("signup-password").value;
+      const confirm = document.getElementById("signup-confirm-password").value;
+      if (password !== confirm) return showNotification("Passwords do not match!", "error");
+      if (SIMULATED_ACCOUNTS[email]) return showNotification("Email already exists!", "error");
+      SIMULATED_ACCOUNTS[email] = password;
+      showNotification("✅ Account created!", "success");
+      renderLoginPage();
+      document.getElementById("login-email").value = email;
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.toLowerCase();
+      const password = document.getElementById("login-password").value;
+      if (SIMULATED_ACCOUNTS[email] === password) {
+        isLoggedIn = true; currentUserEmail = email;
+        initializeApp(); showNotification("Welcome!", "success");
+      } else showNotification("Invalid credentials!", "error");
+    }
+
+    function handleLogout() {
+      // Confirm logout
+      if (!confirm("Are you sure you want to logout?")) {
+        return;
+      }
+      
+      // Clear user session
+      isLoggedIn = false;
+      currentUserEmail = null;
+      
+      // Clear any stored data
+      sessionStorage.clear();
+      
+      // Reset UI
+      tileScreen.classList.add("hidden");
+      contentContainer.innerHTML = "";
+      backBtn.classList.add("hidden");
+      profileMenu.classList.add("hidden");
+      
+      // Show login page
+      renderHomePage();
+      showNotification("✅ Logged out successfully!", "success");
+    }
+
+    /* INIT DASHBOARD */
+    function initializeApp() {
+      loginContainer.classList.add("hidden");
+      appHeader.classList.remove("hidden");
+      mainContent.classList.remove("hidden");
+      tileScreen.classList.remove("hidden");
+      contentContainer.classList.add("hidden");
+      backBtn.classList.add("hidden");
+      emergencyBtn.classList.remove("hidden");
+       // ★ ADDED: set email in dropdown when logged in
+      if (profileEmailEl && currentUserEmail) {
+        profileEmailEl.textContent = currentUserEmail;
+      }
+      // Load SOS responses inbox
+      loadSOSResponses();
+      // Fade
+      reveal(tileScreen);
+    }
+    
+    /* Load SOS Responses (Donor responses to your emergency alerts) */
+    async function loadSOSResponses() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/notifications/${encodeURIComponent(currentUserEmail)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const notifications = data.notifications || [];
+          
+          // Filter only pending notifications for this user
+          const pendingCount = notifications.filter(n => n.status === 'pending').length;
+          
+          // Update badge
+          const badge = document.getElementById("confirm-badge");
+          if (badge) {
+            badge.textContent = pendingCount;
+            badge.style.display = pendingCount > 0 ? 'grid' : 'none';
+          }
+          
+          // Set up click handler
+          const confirmBtn = document.getElementById("confirm-btn");
+          const confirmMenu = document.getElementById("confirm-menu");
+          
+          if (confirmBtn && confirmMenu) {
+            confirmBtn.onclick = () => {
+              confirmMenu.classList.toggle("hidden");
+              displaySOSNotifications(notifications);
+            };
+          }
+        }
+      } catch (e) {
+        console.log("Could not load SOS responses:", e);
+      }
+    }
+    
+    /* Display SOS Notifications in Inbox */
+    function displaySOSNotifications(notifications) {
+      const confirmList = document.getElementById("confirm-list");
+      if (!confirmList) return;
+      
+      confirmList.innerHTML = '';
+      
+      if (notifications.length === 0) {
+        confirmList.innerHTML = '<li class="p-4 text-gray-500 text-center">No SOS alerts sent yet</li>';
+        return;
+      }
+      
+      notifications.forEach(notif => {
+        const statusClass = notif.status === 'accepted' ? 'bg-green-100 dark:bg-green-900' :
+                           notif.status === 'ignored' ? 'bg-gray-100 dark:bg-gray-700' :
+                           'bg-red-100 dark:bg-red-900';
+        
+        const statusIcon = notif.status === 'accepted' ? '✓' :
+                          notif.status === 'ignored' ? '✕' : '⏳';
+        
+        const li = document.createElement('li');
+        li.className = `${statusClass} p-3 text-sm`;
+        li.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <p class="font-semibold text-gray-800 dark:text-white">
+                <i class="fa-solid fa-stethoscope text-red-600 mr-2"></i>Donor: ${notif.donor_email}
+              </p>
+              <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                Patient: ${notif.patient_name} | Blood: ${notif.blood_group}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                ${new Date(notif.created_at).toLocaleDateString()}
+              </p>
+            </div>
+            <span class="ml-2 font-bold text-lg">${statusIcon}</span>
+          </div>
+          ${notif.status === 'pending' ? `
+            <div class="mt-2 flex gap-2">
+              <button onclick="updateSOSResponse(${notif.notification_id}, 'accepted')" 
+                      class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-1 px-2 rounded">Accept</button>
+              <button onclick="updateSOSResponse(${notif.notification_id}, 'ignored')" 
+                      class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded">Ignore</button>
+            </div>
+          ` : ''}
+        `;
+        confirmList.appendChild(li);
+      });
+    }
+    
+    /* Update SOS Response Status */
+    async function updateSOSResponse(notificationId, status) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status })
+        });
+        
+        if (res.ok) {
+          showNotification(`✅ Donor response marked as ${status}!`, "success");
+          loadSOSResponses(); // Refresh inbox
+        }
+      } catch (e) {
+        showNotification("Error updating response", "error");
+      }
+    }
+
+    /* TILE ACTIONS */
+    document.getElementById("tile-register").onclick = () => showPage("register");
+    document.getElementById("tile-request").onclick = () => showPage("request");
+    document.getElementById("tile-matches").onclick = () => showPage("matches");
+    document.getElementById("tile-chatbot").onclick = () => showPage("chatbot");
+
+    /* BACK */
+    backBtn.onclick = () => {
+      tileScreen.classList.remove("hidden");
+      contentContainer.classList.add("hidden");
+      backBtn.classList.add("hidden");
+      reveal(tileScreen);
+    };
+
+    function showPage(tab) {
+      tileScreen.classList.add("hidden");
+      contentContainer.classList.remove("hidden");
+      backBtn.classList.remove("hidden");
+      // animate
+      contentContainer.classList.remove('show');
+      setTimeout(() => contentContainer.classList.add('show'), 10);
+
+      if (tab === "register") renderDonorRegistration();
+      if (tab === "request") renderBloodRequest();
+      if (tab === "matches") renderViewMatches();
+      if (tab === "chatbot") renderChatbot();
+    }
+
+    /* SOS */
+    emergencyBtn.onclick = async () => {
+      const city = prompt("Enter your city:");
+      if (!city) return alert("City required.");
+      
+      const blood_group = prompt("Enter required blood group (e.g., O+, B-, AB+):");
+      if (!blood_group) return alert("Blood group required.");
+      
+      const patientName = prompt("Enter patient name:");
+      if (!patientName) return alert("Patient name required.");
+      
+      const patientPhone = prompt("Enter patient phone number:");
+      if (!patientPhone) return alert("Patient phone number required.");
+      
+      const hospitalName = prompt("Enter hospital name:");
+      if (!hospitalName) return alert("Hospital name required.");
+      
+      const unitsRequired = prompt("Enter number of units required:");
+      if (!unitsRequired) return alert("Number of units required.");
+      
+      // Ask whether to send SMS as well
+      const sendSMS = confirm("Also send SMS alerts to donors? (Make sure SMSHorizon is configured)");
+
+      const res = await fetch(`${API_BASE_URL}/api/emergency-alert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          city, 
+          blood_group,
+          patient_name: patientName,
+          patient_phone: patientPhone,
+          hospital_name: hospitalName,
+          units_required: unitsRequired,
+          message: "🚨 EMERGENCY: Blood donation needed urgently!", 
+          via_sms: sendSMS
+        }),
+      });
+      
+
+      const data = await res.json();
+      if (data.notified_count !== undefined) {
+        const smsInfo = sendSMS ? " (Email + SMS)" : " (Email only)";
+        alert(`✅ Emergency alerts sent to ${data.notified_count} donors${smsInfo}\n\nCheck details in response for delivery status.`);
+        console.log("SOS Alert Details:", data.details);
+      } else {
+        alert("⚠ " + (data.error || "Failed to send alerts"));
+      }
+    };
+
+    /* -------- Feature Screens (logic preserved) -------- */
+    function renderDonorRegistration() {
+      contentContainer.innerHTML = `
+        <h2 class="text-2xl font-bold mb-4 text-red-600">Donor Registration</h2>
+        <form id="donor-registration-form" class="space-y-4">
+          <input id="donor-name" placeholder="Full Name" required class="w-full p-3 border rounded-lg input-dark">
+          <input id="donor-email" value="${currentUserEmail || ""}" readonly class="w-full p-3 border rounded-lg input-dark">
+          <input id="donor-phone" placeholder="Phone Number" required class="w-full p-3 border rounded-lg input-dark">
+          <input id="donor-city" placeholder="City" required class="w-full p-3 border rounded-lg input-dark">
+          <select id="donor-blood-group" required class="w-full p-3 border rounded-lg input-dark">
+            <option value="">Select Blood Group</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option>
+            <option>AB+</option><option>AB-</option>
+          </select>
+          <button type="submit" class="w-full py-3 btn-primary rounded-lg">Register</button>
+        </form>`;
+      document.getElementById("donor-registration-form").addEventListener("submit", handleDonorRegistration);
+    }
+
+    async function handleDonorRegistration(e) {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById("donor-name").value,
+        email: document.getElementById("donor-email").value,
+        phone: document.getElementById("donor-phone").value,
+        blood_group: document.getElementById("donor-blood-group").value,
+        city: document.getElementById("donor-city").value,
+        state: "AP Telangana",
+        availability: "Ready",
+        pints_donated: 1,
+        latitude: user_lat,
+        longitude: user_lon
+      };
+      const r = await fetch(`${API_BASE_URL}/api/donor/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const j = await r.json();
+      if (j.donor_id) showNotification("Donor registered!", "success");
+      else showNotification(j.error || "Error", "error");
+    }
+
+    function renderBloodRequest() {
+      contentContainer.innerHTML = `
+        <h2 class="text-2xl font-bold mb-4 text-red-600">Request Blood</h2>
+        <form id="blood-request-form" class="space-y-4">
+          <select id="req-blood-group" required class="w-full p-3 border rounded-lg input-dark">
+            <option value="">Select Blood Group</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option>
+            <option>AB+</option><option>AB-</option>
+          </select>
+          <input id="req-city" placeholder="City" required class="w-full p-3 border rounded-lg input-dark">
+          <select id="req-urgency" required class="w-full p-3 border rounded-lg input-dark">
+            <option value="">Select Urgency</option>
+            <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+          </select>
+          <button type="submit" class="w-full py-3 btn-primary rounded-lg">Submit Request</button>
+        </form>`;
+      document.getElementById("blood-request-form").addEventListener("submit", handleBloodRequest);
+    }
+
+    async function handleBloodRequest(e) {
+      e.preventDefault();
+      const data = {
+        blood_group: document.getElementById("req-blood-group").value,
+        city: document.getElementById("req-city").value,
+        urgency: document.getElementById("req-urgency").value
+      };
+      const r = await fetch(`${API_BASE_URL}/api/request/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const j = await r.json();
+      if (j.request_id) {
+        alert(`Your Request ID: ${j.request_id}`);
+        showNotification("Request created!", "success");
+      } else showNotification(j.error || "Error", "error");
+    }
+
+    function renderViewMatches() {
+      contentContainer.innerHTML = `
+        <h2 class="text-2xl font-bold mb-4 text-red-600">Find Matches</h2>
+        <form id="match-search-form" class="space-y-4">
+          <input type="number" id="match-request-id" placeholder="Enter Request ID" class="w-full p-3 border rounded-lg input-dark">
+          <button type="submit" class="w-full py-3 btn-primary rounded-lg">Search</button>
+        </form>
+        <div id="match-results" class="mt-6"></div>`;
+      document.getElementById("match-search-form").addEventListener("submit", handleMatchSearch);
+    }
+
+    async function handleMatchSearch(e) {
+      e.preventDefault();
+      const id = document.getElementById("match-request-id").value.trim();
+      const resBox = document.getElementById("match-results");
+      const r = await fetch(`${API_BASE_URL}/api/request/matches/${id}`);
+      const j = await r.json();
+      if (j.error) {
+        resBox.innerHTML = `<p class="text-red-600">${j.error}</p>`;
+        return;
+      }
+      if (j.total_matches === 0) {
+        resBox.innerHTML = `<p>No donors available.</p>`;
+        return;
+      }
+      resBox.innerHTML = `
+        <h3 class="text-lg font-bold mb-2">Matched Donors (${j.total_matches})</h3>
+        ${j.available_donors.map(d => `
+          <div class="p-3 rounded border bg-green-50 dark:bg-[#1b2029] dark:border-[#2f3747]">
+            <div class="font-semibold">${d.name}
+              <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-900 text-white">${d.blood_group}</span>
+            </div>
+            <div class="text-sm">📍 ${d.city} • ${d.distance_km} km</div>
+            <div class="text-sm">📞 ${d.phone} • 📧 ${d.email || "—"}</div>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function renderChatbot() {
+      contentContainer.innerHTML = `
+        <h2 class="text-2xl font-bold mb-4 text-red-600">Chatbot</h2>
+        <div id="chat-box" class="h-80 overflow-y-auto border rounded-lg p-4 bg-gray-50 dark:bg-[#1b2029] mb-4"></div>
+        <form id="chat-form" class="flex gap-2">
+          <input id="chat-input" placeholder="Ask something..." class="flex-1 p-3 border rounded-lg input-dark">
+          <button type="submit" class="px-4 py-2 btn-primary rounded-lg">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>`;
+      const chatBox = document.getElementById("chat-box");
+      const chatForm = document.getElementById("chat-form");
+      const chatInput = document.getElementById("chat-input");
+
+      chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+        chatBox.innerHTML += `<div class="text-right mb-2">
+          <span class="inline-block bg-red-600 text-white px-3 py-2 rounded-lg">${message}</span>
+        </div>`;
+        chatInput.value = "";
+        const typing = document.createElement("div");
+        typing.className = "text-left mb-2 text-gray-500 italic";
+        typing.textContent = "Assistant is typing…";
+        chatBox.appendChild(typing);
+
+        try {
+          const r = await fetch(`${API_BASE_URL}/chatbot`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+          });
+          const j = await r.json();
+          typing.remove();
+          chatBox.innerHTML += `<div class="text-left mb-2">
+            <span class="inline-block bg-gray-200 dark:bg-[#2a3140] px-3 py-2 rounded-lg">${j.reply || "Sorry, I couldn’t understand that."}</span>
+          </div>`;
+          chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (err) {
+          typing.remove();
+          chatBox.innerHTML += `<div class="text-left mb-2 text-red-600">Error connecting to chatbot.</div>`;
+          console.error('Chatbot error', err);
+        }
+      });
+    }
+
+    /* Render Donor Profile */
+    async function renderDonorProfile() {
+      contentContainer.innerHTML = `
+        <h2 class="text-2xl font-bold mb-4 text-red-600">My Profile</h2>
+        <div id="profile-loading" class="text-center">Loading profile...</div>
+        <div id="profile-content" class="hidden"></div>
+      `;
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/donor-by-email/${encodeURIComponent(currentUserEmail)}`);
+        if (res.ok) {
+          const donor = await res.json();
+          document.getElementById("profile-loading").classList.add("hidden");
+          document.getElementById("profile-content").classList.remove("hidden");
+          
+          document.getElementById("profile-content").innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+              <!-- Personal Info -->
+              <div class="bg-white dark:bg-[#151922] p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Personal Information</h3>
+                <div class="space-y-3 text-gray-700 dark:text-gray-300">
+                  <p><strong>Name:</strong> ${donor.name || 'N/A'}</p>
+                  <p><strong>Email:</strong> ${donor.email || 'N/A'}</p>
+                  <p><strong>Phone:</strong> ${donor.contact_number || 'N/A'}</p>
+                  <p><strong>Age:</strong> ${donor.age || 'N/A'}</p>
+                  <p><strong>Gender:</strong> ${donor.gender || 'N/A'}</p>
+                </div>
+              </div>
+              
+              <!-- Donation Info -->
+              <div class="bg-white dark:bg-[#151922] p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Donation Information</h3>
+                <div class="space-y-3 text-gray-700 dark:text-gray-300">
+                  <p><strong>Blood Group:</strong> <span class="text-lg font-bold text-red-600">${donor.blood_group || 'N/A'}</span></p>
+                  <p><strong>City:</strong> ${donor.city || 'N/A'}</p>
+                  <p><strong>Availability:</strong> ${donor.availability || 'N/A'}</p>
+                  <p><strong>Last Donation:</strong> ${donor.last_donation_date || 'Never'}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          document.getElementById("profile-loading").innerHTML = "Profile not found";
+        }
+      } catch (e) {
+        document.getElementById("profile-loading").innerHTML = "Error loading profile: " + e.message;
+        console.error(e);
+      }
+    }
+
+    /* START */
+    // Load app immediately
+    window.addEventListener('DOMContentLoaded', renderHomePage);
+
+    // Check and initialize database in background (non-blocking)
+    async function checkAndInitDatabase() {
+      try {
+        const response = await fetch('/api/check-db');
+        const dbStatus = await response.json();
+        
+        if (!dbStatus.schema_initialized) {
+          console.log('📊 Database schema not initialized. Initializing in background...');
+          const initResponse = await fetch('/api/init-db', { method: 'POST' });
+          const initResult = await initResponse.json();
+          
+          if (initResult.success) {
+            console.log('✅ Database schema initialized successfully!');
+          } else {
+            console.error('❌ Failed to initialize database:', initResult.error);
+          }
+        } else {
+          console.log('✅ Database schema already initialized', dbStatus);
+        }
+      } catch (e) {
+        console.error('Database check error:', e);
+        // Continue anyway - database error shouldn't block the UI
+      }
+    }
+
+    // Check database in background after page loads
+    setTimeout(checkAndInitDatabase, 1000);
+
+    /* PWA Service Worker Registration */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('ServiceWorker registered: ', registration);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker available, show update notification
+                  if (confirm('New version available! Reload to update?')) {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          })
+          .catch((error) => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+      });
+
+      // Reload page when new service worker takes control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

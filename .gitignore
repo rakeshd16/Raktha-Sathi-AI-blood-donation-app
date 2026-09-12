@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+token.json
+credentials.json
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+models/
+*.log

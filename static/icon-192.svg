@@ -1,0 +1,6 @@
+<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" fill="#d50000"/>
+  <circle cx="96" cy="96" r="70" fill="white"/>
+  <path d="M96 50 L96 142 M50 96 L142 96" stroke="#d50000" stroke-width="16" stroke-linecap="round"/>
+  <text x="96" y="165" font-family="Arial" font-size="18" fill="white" text-anchor="middle" font-weight="bold">रक्त-साथी</text>
+</svg>
